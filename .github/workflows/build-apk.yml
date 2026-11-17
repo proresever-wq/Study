@@ -1,11 +1,11 @@
 
-name: Build StudyOS v1.5.1 APK
+name: Build StudyOS v1.5.2 Gemini Retry
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - 'StudyOS-Android-Project-v1.5.1-ImageViewer.zip'
+      - 'StudyOS-Android-Project-v1.5.2-Gemini-Retry.zip'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -21,7 +21,7 @@ jobs:
 
       - name: Extract project
         run: |
-          unzip -q StudyOS-Android-Project-v1.5.1-ImageViewer.zip
+          unzip -q StudyOS-Android-Project-v1.5.2-Gemini-Retry.zip
           test -f StudyOS-Android/app/build.gradle.kts
 
       - name: Set up Java 17
@@ -43,6 +43,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: StudyOS-APK-v1.5.1
+          name: StudyOS-APK-v1.5.2-Gemini-Retry
           path: StudyOS-Android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 7
