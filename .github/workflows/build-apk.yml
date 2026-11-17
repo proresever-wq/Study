@@ -1,11 +1,11 @@
 
-name: Build StudyOS 1.3 AI APK
+name: Build StudyOS v1.4 APK
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - 'StudyOS-Android-Project-v1.3-AI.zip'
+      - 'StudyOS-Android-Project-v1.4-StudyWorkspace.zip'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -21,7 +21,7 @@ jobs:
 
       - name: Extract project
         run: |
-          unzip -q StudyOS-Android-Project-v1.3-AI.zip
+          unzip -q StudyOS-Android-Project-v1.4-StudyWorkspace.zip
           test -f StudyOS-Android/app/build.gradle.kts
 
       - name: Set up Java 17
@@ -43,6 +43,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: StudyOS-APK-v1.3-AI
+          name: StudyOS-APK-v1.4-StudyWorkspace
           path: StudyOS-Android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 7
