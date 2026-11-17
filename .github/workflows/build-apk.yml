@@ -1,4 +1,3 @@
-
 name: Build DERASTAK Android
 
 on:
@@ -9,52 +8,79 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: derastak-android-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
-  ANDROID_COMPILE_SDK: '35'
-  ANDROID_BUILD_TOOLS: '35.0.0'
-  GRADLE_VERSION: '8.9'
-  CMAKE_BUILD_PARALLEL_LEVEL: '2'
+  ANDROID_COMPILE_SDK: "35"
+  ANDROID_BUILD_TOOLS: "35.0.0"
+  ANDROID_NDK_VERSION: "27.2.12479018"
+  CMAKE_VERSION: "3.22.1"
 
 jobs:
   build:
     name: Build debug APK
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
-      - name: Checkout source
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
-      - name: Set up Gradle
+      - name: Set up Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: ${{ env.GRADLE_VERSION }}
+          gradle-version: "8.9"
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          accept-android-sdk-licenses: true
 
-      - name: Install Android SDK, NDK and CMake
+      - name: Install required Android packages
         run: |
-          sdkmanager "platforms;android-${ANDROID_COMPILE_SDK}" \
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager \
+            "platforms;android-${ANDROID_COMPILE_SDK}" \
             "build-tools;${ANDROID_BUILD_TOOLS}" \
-            "ndk;27.2.12479018" \
-            "cmake;3.22.1"
+            "ndk;${ANDROID_NDK_VERSION}" \
+            "cmake;${CMAKE_VERSION}"
+
+      - name: Extract project source archive
+        run: |
+          test -f DERASTAK-Local-AI-Integration-v2.2.0.zip
+          mkdir -p .build-src
+          unzip -q DERASTAK-Local-AI-Integration-v2.2.0.zip -d .build-src
+          test -f .build-src/StudyOS-Android/settings.gradle.kts
+          test -f .build-src/StudyOS-Android/app/build.gradle.kts
+          test -f .build-src/StudyOS-Android/app/src/main/cpp/CMakeLists.txt
 
       - name: Verify source integrations
+        working-directory: .build-src/StudyOS-Android
         run: bash scripts/verify-source.sh
 
       - name: Build APK with native llama.cpp
+        working-directory: .build-src/StudyOS-Android
         run: gradle --no-daemon --stacktrace assembleDebug
+
+      - name: Verify APK exists
+        run: |
+          APK=".build-src/StudyOS-Android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          ls -lh "$APK"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: DERASTAK-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: .build-src/StudyOS-Android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
